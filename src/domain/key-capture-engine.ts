@@ -104,6 +104,15 @@ export function createKeyCaptureEngine(): KeyCaptureEngine {
           modifiers: { ...state.modifiers, [modifierKey]: true },
         };
       }
+
+      // Fire callbacks for modifier-only presses (supports single-modifier prompts)
+      const snapshot: KeyState = {
+        modifiers: { ...state.modifiers },
+        baseKey: code, // The modifier itself is the "key pressed"
+      };
+      for (const callback of callbacks) {
+        callback(snapshot);
+      }
     } else {
       // Non-modifier key pressed — update base key and fire callbacks
       state = { ...state, baseKey: code };
