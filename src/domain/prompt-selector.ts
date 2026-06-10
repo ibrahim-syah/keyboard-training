@@ -1,6 +1,7 @@
 import type { KeyCombination, KeyCategory } from './types';
 import { KEY_PROMPTS_BY_CATEGORY } from '../data/key-prompts';
-import { isOsReserved } from '../data/os-reserved';
+import { loadOverrides, getEffectiveList, isReserved } from './reserved-list-manager';
+import { DEFAULT_RESERVED_COMBINATIONS } from '../data/default-reserved';
 
 /**
  * Result of prompt selection including selected prompts and any skip notices
@@ -23,18 +24,24 @@ const ALL_CATEGORIES: KeyCategory[] = [
 ];
 
 /**
- * Filters out OS-reserved combinations from a list of prompts.
+ * Filters out reserved combinations from a list of prompts.
+ * Uses the effective reserved list computed from defaults + user overrides.
  * Returns both the available prompts and the skipped reserved ones.
+ *
+ * Requirements: 6.1, 6.2, 6.3
  */
 function filterReserved(prompts: KeyCombination[]): {
   available: KeyCombination[];
   reserved: KeyCombination[];
 } {
+  const overrides = loadOverrides();
+  const effectiveList = getEffectiveList(DEFAULT_RESERVED_COMBINATIONS, overrides);
+
   const available: KeyCombination[] = [];
   const reserved: KeyCombination[] = [];
 
   for (const prompt of prompts) {
-    if (isOsReserved(prompt)) {
+    if (isReserved(prompt, effectiveList)) {
       reserved.push(prompt);
     } else {
       available.push(prompt);

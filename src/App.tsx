@@ -1,14 +1,15 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import ExercisePage from './pages/ExercisePage';
 import DrillPage from './pages/DrillPage';
 import ProgressPage from './pages/ProgressPage';
 import CustomSetsPage from './pages/CustomSetsPage';
+import ReservedSettingsPage from './pages/ReservedSettingsPage';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
@@ -16,8 +17,9 @@ export default function App() {
           <Route path="/drill" element={<DrillPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/custom-sets" element={<CustomSetsPage />} />
+          <Route path="/settings/reserved" element={<ReservedSettingsPage />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

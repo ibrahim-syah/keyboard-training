@@ -8,6 +8,7 @@ const navItems = [
   { to: '/drill', label: 'Drill' },
   { to: '/progress', label: 'Progress' },
   { to: '/custom-sets', label: 'Custom Sets' },
+  { to: '/settings/reserved', label: 'Reserved Keys' },
 ] as const;
 
 export default function Layout() {
