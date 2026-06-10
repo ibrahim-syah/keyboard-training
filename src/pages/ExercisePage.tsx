@@ -28,19 +28,29 @@ const CATEGORIES: { id: KeyCategory | 'mixed'; label: string }[] = [
  * for a given KeyCombination.
  */
 function getHighlightedKeyCodes(combination: KeyCombination): string[] {
-  const codes: string[] = [];
+  const codes = new Set<string>();
   const { modifiers, baseKey } = combination;
 
-  if (modifiers.ctrl) codes.push('ControlLeft');
-  if (modifiers.alt) codes.push('AltLeft');
-  if (modifiers.shift) codes.push('ShiftLeft');
-  if (modifiers.meta) codes.push('MetaLeft');
-
-  if (baseKey) {
-    codes.push(baseKey);
+  // Add modifier keys, but only if the baseKey isn't already that specific modifier
+  if (modifiers.ctrl && baseKey !== 'ControlLeft' && baseKey !== 'ControlRight') {
+    codes.add('ControlLeft');
+  }
+  if (modifiers.alt && baseKey !== 'AltLeft' && baseKey !== 'AltRight') {
+    codes.add('AltLeft');
+  }
+  if (modifiers.shift && baseKey !== 'ShiftLeft' && baseKey !== 'ShiftRight') {
+    codes.add('ShiftLeft');
+  }
+  if (modifiers.meta && baseKey !== 'MetaLeft' && baseKey !== 'MetaRight') {
+    codes.add('MetaLeft');
   }
 
-  return codes;
+  // Always add the baseKey itself
+  if (baseKey) {
+    codes.add(baseKey);
+  }
+
+  return Array.from(codes);
 }
 
 /**
@@ -98,7 +108,15 @@ function formatKeyState(keyState: KeyState): string {
  */
 export default function ExercisePage() {
   // --- Setup state ---
-  const [selectedCategory, setSelectedCategory] = useState<KeyCategory | 'mixed'>('combinations');
+  // Read category from URL query param (e.g., /exercise?category=modifiers)
+  const initialCategory = (() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
+    const cat = params.get('category');
+    const validCategories = ['modifiers', 'numbers', 'function-keys', 'navigation', 'combinations', 'mixed'];
+    if (cat && validCategories.includes(cat)) return cat as KeyCategory | 'mixed';
+    return 'combinations' as KeyCategory | 'mixed';
+  })();
+  const [selectedCategory, setSelectedCategory] = useState<KeyCategory | 'mixed'>(initialCategory);
   const [promptCount, setPromptCount] = useState(20);
   const [mode, setMode] = useState<'setup' | 'active' | 'complete'>('setup');
   const [selectedLevel, setSelectedLevel] = useState<DifficultyLevel>(1);
@@ -117,7 +135,7 @@ export default function ExercisePage() {
   const [accuracy, setAccuracy] = useState(0);
   const [avgResponseTime, setAvgResponseTime] = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0);
-  const [exerciseCategory, setExerciseCategory] = useState<KeyCategory>('combinations');
+  const exerciseCategoryRef = useRef<KeyCategory>('combinations');
 
   // --- OS-reserved notification ---
   const [reservedNotice, setReservedNotice] = useState<string | null>(null);
@@ -239,7 +257,7 @@ export default function ExercisePage() {
     setCurrentPrompt(state.currentPrompt);
     setCurrentIndex(state.currentPromptIndex);
     setTotalPrompts(state.totalPrompts);
-    setExerciseCategory(category);
+    exerciseCategoryRef.current = category;
     setFeedback(null);
     setPressedKeys(null);
     setMode('active');
@@ -302,7 +320,7 @@ export default function ExercisePage() {
         const sessionRecord: SessionRecord = {
           id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
           date: new Date().toISOString(),
-          category: exerciseCategory,
+          category: exerciseCategoryRef.current,
           accuracy: acc,
           avgResponseTimeMs: avgTime,
           promptCount: results.length,
@@ -341,7 +359,7 @@ export default function ExercisePage() {
 
     // Start inactivity timer
     resetInactivityTimer();
-  }, [selectedCategory, selectedLevel, promptCount, resetInactivityTimer, showReservedNotice, exerciseCategory]);
+  }, [selectedCategory, selectedLevel, promptCount, resetInactivityTimer, showReservedNotice]);
 
   /**
    * Reset to setup mode.
